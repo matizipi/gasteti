@@ -1,0 +1,73 @@
+"use client";
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Menu, X, Home, Calendar, History } from 'lucide-react';
+import './components.css';
+
+export default function Sidebar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  const toggleSidebar = () => setIsOpen(!isOpen);
+
+  const closeSidebar = () => setIsOpen(false);
+
+  return (
+    <>
+      {/* Hamburger Button */}
+      <button 
+        className="menu-btn" 
+        onClick={toggleSidebar}
+        aria-label="Toggle Menu"
+      >
+        <Menu size={28} color="var(--primary)" />
+      </button>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
+      {/* Sidebar Content */}
+      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h2>Kawaii Expenses</h2>
+          <button onClick={closeSidebar} className="close-btn">
+            <X size={24} color="var(--text-muted)" />
+          </button>
+        </div>
+
+        <nav className="sidebar-nav">
+          <Link 
+            href="/" 
+            className={`nav-link ${pathname === '/' ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            <Home size={20} />
+            <span>Inicio</span>
+          </Link>
+          
+          <Link 
+            href="/gastos?view=current" 
+            className={`nav-link ${pathname === '/gastos' && typeof window !== 'undefined' && window.location.search.includes('view=current') ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            <Calendar size={20} />
+            <span>Gastos del Mes</span>
+          </Link>
+          
+          <Link 
+            href="/gastos?view=history" 
+            className={`nav-link ${pathname === '/gastos' && typeof window !== 'undefined' && window.location.search.includes('view=history') ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            <History size={20} />
+            <span>Histórico</span>
+          </Link>
+        </nav>
+      </div>
+    </>
+  );
+}
