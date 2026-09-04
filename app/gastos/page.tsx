@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ExpenseList from '@/components/ExpenseList';
 
-export default function GastosPage() {
+function GastosContent() {
   const searchParams = useSearchParams();
   const view = searchParams.get('view') || 'current';
   
@@ -150,5 +150,15 @@ export default function GastosPage() {
         <ExpenseList expenses={expenses} onDelete={handleDelete} />
       )}
     </main>
+  );
+}
+
+import { Suspense } from 'react';
+
+export default function GastosPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', marginTop: '40px', color: 'var(--primary)' }}>Cargando...</div>}>
+      <GastosContent />
+    </Suspense>
   );
 }
