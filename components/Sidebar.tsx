@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Home, Calendar, History } from 'lucide-react';
@@ -14,17 +14,44 @@ export default function Sidebar() {
 
   const closeSidebar = () => setIsOpen(false);
 
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+
+      const diffX = endX - startX;
+      const diffY = Math.abs(endY - startY);
+
+      // Swipe right to open (only if starting near the left edge)
+      if (diffX > 50 && diffY < 50 && startX < 50) {
+        setIsOpen(true);
+      }
+
+      // Swipe left to close
+      if (diffX < -50 && diffY < 50) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
   return (
     <>
-      {/* Hamburger Button */}
-      <button 
-        className="menu-btn" 
-        onClick={toggleSidebar}
-        aria-label="Toggle Menu"
-      >
-        <Menu size={28} color="var(--primary)" />
-      </button>
-
       {/* Overlay */}
       {isOpen && (
         <div className="sidebar-overlay" onClick={closeSidebar}></div>
