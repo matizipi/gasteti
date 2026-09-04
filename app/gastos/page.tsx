@@ -24,6 +24,8 @@ function GastosContent() {
     }
   }, [view]);
 
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+
   useEffect(() => {
     async function fetchExpenses() {
       setLoading(true);
@@ -42,16 +44,22 @@ function GastosContent() {
     fetchExpenses();
   }, [selectedMonth, selectedYear, view]);
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este gasto?')) {
-      try {
-        const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          setExpenses(prev => prev.filter((exp: any) => exp._id !== id));
-        }
-      } catch (err) {
-        console.error('Error deleting expense:', err);
+  const requestDelete = (id: string) => {
+    setExpenseToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!expenseToDelete) return;
+    
+    try {
+      const res = await fetch(`/api/expenses/${expenseToDelete}`, { method: 'DELETE' });
+      if (res.ok) {
+        setExpenses(prev => prev.filter((exp: any) => exp._id !== expenseToDelete));
       }
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+    } finally {
+      setExpenseToDelete(null);
     }
   };
 
@@ -147,7 +155,24 @@ function GastosContent() {
       {loading ? (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px' }}>Cargando...</div>
       ) : (
-        <ExpenseList expenses={expenses} onDelete={handleDelete} />
+        <ExpenseList expenses={expenses} onDelete={requestDelete} />
+      )}
+
+      {expenseToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>¿Eliminar gasto? 🥺</h3>
+            <p>Se borrará este gasto permanentemente y el balance se recalculará automáticamente.</p>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setExpenseToDelete(null)}>
+                Mejor no
+              </button>
+              <button className="btn-confirm" onClick={confirmDelete}>
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
