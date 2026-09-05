@@ -101,7 +101,6 @@
   color: var(--text-main);
 }
 
-/* Sidebar Styles */
 .menu-btn {
   position: absolute;
   top: 24px;
@@ -114,6 +113,13 @@
   cursor: pointer;
   z-index: 50;
   transition: transform 0.2s ease;
+  display: block; /* Visible by default (desktop) */
+}
+
+@media (max-width: 768px) {
+  .menu-btn {
+    display: none; /* Hidden on mobile */
+  }
 }
 
 .menu-btn:hover {

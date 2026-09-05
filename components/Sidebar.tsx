@@ -52,6 +52,15 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Hamburger Button (Hidden on mobile via CSS) */}
+      <button 
+        className="menu-btn" 
+        onClick={toggleSidebar}
+        aria-label="Toggle Menu"
+      >
+        <Menu size={28} color="var(--primary)" />
+      </button>
+
       {/* Overlay */}
       {isOpen && (
         <div className="sidebar-overlay" onClick={closeSidebar}></div>
