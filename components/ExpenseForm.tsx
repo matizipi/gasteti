@@ -21,34 +21,44 @@ export default function ExpenseForm({ onExpenseAdded }: { onExpenseAdded: () => 
   
   // Advanced fields
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isFullyPersonal, setIsFullyPersonal] = useState(false);
   const [personalAmount, setPersonalAmount] = useState('');
   const [personalFor, setPersonalFor] = useState('Matu');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const parseAmount = (val: string) => Number(val.replace(',', '.'));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || isNaN(Number(amount))) return;
+    const parsedAmount = parseAmount(amount);
+    if (!amount || isNaN(parsedAmount)) return;
     
     setIsSubmitting(true);
+    
+    // Si es 100% personal, el monto personal es igual al monto total.
+    const finalPersonalAmount = isFullyPersonal ? parsedAmount : (personalAmount ? parseAmount(personalAmount) : 0);
+    const finalPersonalFor = (isFullyPersonal || finalPersonalAmount > 0) ? personalFor : '';
+
     try {
       const res = await fetch('/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: Number(amount),
+          amount: parsedAmount,
           category,
           description,
           date: new Date(date),
           paidBy,
-          personalAmount: personalAmount ? Number(personalAmount) : 0,
-          personalFor: personalAmount ? personalFor : '',
+          personalAmount: finalPersonalAmount,
+          personalFor: finalPersonalFor,
         })
       });
       if (res.ok) {
         setAmount('');
         setDescription('');
         setPersonalAmount('');
+        setIsFullyPersonal(false);
         setShowAdvanced(false);
         onExpenseAdded();
       }
@@ -57,6 +67,12 @@ export default function ExpenseForm({ onExpenseAdded }: { onExpenseAdded: () => 
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    // Solo permitir números, puntos y comas
+    const val = e.target.value.replace(/[^0-9.,]/g, '');
+    setter(val);
   };
 
   return (
@@ -72,11 +88,11 @@ export default function ExpenseForm({ onExpenseAdded }: { onExpenseAdded: () => 
           <div className="amount-input-wrapper">
             <span className="currency-symbol">$</span>
             <input 
-              type="number" 
+              type="text" 
+              inputMode="decimal"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => handleAmountChange(e, setAmount)}
               placeholder="0.00"
-              step="0.01"
               required
               style={{ paddingLeft: '40px', fontSize: '1.5rem', fontWeight: 'bold' }}
             />
@@ -151,32 +167,47 @@ export default function ExpenseForm({ onExpenseAdded }: { onExpenseAdded: () => 
             style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            Más detalles (Monto fijo / personal)
+            Más detalles (Gasto personal)
           </button>
           
           {showAdvanced && (
             <div style={{ marginTop: '12px', padding: '16px', backgroundColor: '#faf7fa', borderRadius: '16px' }}>
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label>Monto Personal (No se divide)</label>
-                <div className="amount-input-wrapper">
-                  <span className="currency-symbol" style={{ fontSize: '1rem', left: '12px' }}>$</span>
-                  <input 
-                    type="number" 
-                    value={personalAmount}
-                    onChange={(e) => setPersonalAmount(e.target.value)}
-                    placeholder="0.00"
-                    step="0.01"
-                    style={{ paddingLeft: '28px' }}
-                  />
+              
+              <div className="form-group" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <label style={{ margin: 0, flex: 1, cursor: 'pointer' }} htmlFor="fully-personal-checkbox">
+                  ¿Es un gasto 100% personal?
+                </label>
+                <div 
+                  className={`toggle-switch ${isFullyPersonal ? 'active' : ''}`}
+                  onClick={() => setIsFullyPersonal(!isFullyPersonal)}
+                >
+                  <div className="toggle-switch-handle"></div>
                 </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Ej: De los $2000 del súper, $500 son de algo tuyo.
-                </p>
               </div>
 
-              {Number(personalAmount) > 0 && (
+              {!isFullyPersonal && (
+                <div className="form-group" style={{ marginBottom: '16px' }}>
+                  <label>Monto Personal Parcial (No se divide)</label>
+                  <div className="amount-input-wrapper">
+                    <span className="currency-symbol" style={{ fontSize: '1rem', left: '12px' }}>$</span>
+                    <input 
+                      type="text" 
+                      inputMode="decimal"
+                      value={personalAmount}
+                      onChange={(e) => handleAmountChange(e, setPersonalAmount)}
+                      placeholder="0.00"
+                      style={{ paddingLeft: '28px' }}
+                    />
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Ej: De los $2000 del súper, $500 son tuyos.
+                  </p>
+                </div>
+              )}
+
+              {(isFullyPersonal || Number(parseAmount(personalAmount)) > 0) && (
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>¿Para quién es este monto?</label>
+                  <label>¿Para quién es este monto personal?</label>
                   <div className="user-toggle">
                     <button 
                         type="button" 
