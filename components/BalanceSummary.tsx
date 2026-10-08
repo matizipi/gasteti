@@ -21,7 +21,10 @@ export default function BalanceSummary({ refreshTrigger }: { refreshTrigger: num
   useEffect(() => {
     async function fetchExpenses() {
       try {
-        const res = await fetch('/api/expenses');
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const res = await fetch(`/api/expenses?month=${currentMonth}&year=${currentYear}`);
         const json = await res.json();
         if (json.success) {
           setExpenses(json.data);
